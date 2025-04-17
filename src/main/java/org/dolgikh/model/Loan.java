@@ -1,6 +1,6 @@
 package org.dolgikh.model;
 
-import java.util.Date;
+import java.sql.Date;
 
 public class Loan {
     private int id;
@@ -8,6 +8,7 @@ public class Loan {
     private Reader reader;
     private Date loanDate;
     private Date returnDate;
+    private boolean returned;
 
     public Loan() {}
 
@@ -57,5 +58,13 @@ public class Loan {
 
     public void setReturnDate(Date returnDate) {
         this.returnDate = returnDate;
+    }
+
+    public boolean isReturned() {
+        return returned;
+    }
+
+    public void setReturned(boolean returned) {
+        this.returned = returned;
     }
 }
