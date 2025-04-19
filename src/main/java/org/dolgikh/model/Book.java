@@ -6,17 +6,17 @@ public class Book {
     private String author;
     private int year;
     private int quantity;
-    private boolean available;
+    private int borrowedCount;
 
     public Book() {}
 
-    public Book(int id, String title, String author, int year, int quantity, boolean available) {
+    public Book(int id, String title, String author, int year, int quantity, int borrowedCount) {
         this.id = id;
         this.title = title;
         this.author = author;
         this.year = year;
         this.quantity = quantity;
-        this.available = available;
+        this.borrowedCount = borrowedCount;
     }
 
     public int getId() {
@@ -59,11 +59,19 @@ public class Book {
         this.quantity = quantity;
     }
 
-    public boolean isAvailable() {
-        return available;
+    public int getBorrowedCount() {
+        return borrowedCount;
     }
 
-    public void setAvailable(boolean available) {
-        this.available = available;
+    public void setBorrowedCount(int borrowedCount) {
+        this.borrowedCount = borrowedCount;
+    }
+
+    public int getAvailableCount() {
+        return quantity - borrowedCount;
+    }
+
+    public boolean isAvailable() {
+        return getAvailableCount() > 0;
     }
 }
