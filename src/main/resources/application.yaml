@@ -1,0 +1,4 @@
+database:
+  url: "jdbc:postgresql://localhost:5432/java-library-app"
+  user: "postgres"
+  password: "1234"
