@@ -37,14 +37,21 @@ public class LoanDAO {
         throw new RuntimeException("Не удалось получить ID выдачи");
     }
 
-    public void returnBook(int bookId) {
-        String sql = "UPDATE loans SET returned = true WHERE book_id = ? AND returned = false";
+    public void returnBook(int bookId, int readerId) {
+        String sql = "UPDATE loans SET returned = true WHERE book_id = ? AND reader_id = ? AND returned = false";
 
         try (Connection conn = DatabaseConnector.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setInt(1, bookId);
-            stmt.executeUpdate();
+            stmt.setInt(2, readerId);
+
+            int affectedRows = stmt.executeUpdate();
+
+            if (affectedRows == 0) {
+                throw new IllegalStateException("Выдача не найдена или книга уже возвращена");
+            }
+
         } catch (SQLException e) {
             throw new RuntimeException("Ошибка при возврате книги", e);
         }

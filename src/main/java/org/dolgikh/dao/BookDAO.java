@@ -10,7 +10,7 @@ import java.util.List;
 public class BookDAO {
 
     public int addBook(Book book) {
-        String sql = "INSERT INTO books (title, author, year, quantity, borrowed_count) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO books (title, author, year, total_quantity, borrowed_count) VALUES (?, ?, ?, ?, ?)";
 
         try (Connection conn = DatabaseConnector.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -42,7 +42,12 @@ public class BookDAO {
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setInt(1, id);
-            stmt.executeUpdate();
+            int affectedRows = stmt.executeUpdate();
+
+            if (affectedRows == 0) {
+                throw new IllegalStateException("Книга не найдена или уже удалена");
+            }
+
         } catch (SQLException e) {
             throw new RuntimeException("Ошибка при удалении книги", e);
         }
@@ -85,7 +90,7 @@ public class BookDAO {
 
     public List<Book> getAvailableBooks() {
         List<Book> books = new ArrayList<>();
-        String sql = "SELECT * FROM books WHERE quantity > borrowed_count";
+        String sql = "SELECT * FROM books WHERE total_quantity > borrowed_count";
 
         try (Connection conn = DatabaseConnector.getConnection();
              Statement stmt = conn.createStatement();

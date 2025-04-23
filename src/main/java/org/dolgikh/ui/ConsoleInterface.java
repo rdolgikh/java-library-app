@@ -4,6 +4,8 @@ import org.dolgikh.model.Book;
 import org.dolgikh.model.Loan;
 import org.dolgikh.service.LibraryService;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Scanner;
 
@@ -59,20 +61,32 @@ public class ConsoleInterface {
     // Реализация только требуемых методов:
 
     private void addBook() {
-        System.out.println("\nДобавление книги:");
-        String title = readStringInput("Название: ");
-        String author = readStringInput("Автор: ");
-        int year = readIntInput("Год: ");
-        int quantity = readIntInput("Количество: ");
+        try {
+            System.out.println("\nДобавление новой книги:");
+            String title = readStringInput("Название: ");
+            String author = readStringInput("Автор: ");
+            int year = readIntInput("Год издания: ");
+            int totalQuantity = readIntInput("Количество экземпляров: ");
 
-        service.addBook(title, author, year, quantity);
-        System.out.println("Книга добавлена!");
+            int bookId = service.addBook(title, author, year, totalQuantity);
+            System.out.println("Книга успешно добавлена с ID: " + bookId);
+        } catch (IllegalArgumentException e) {
+            System.err.println("Ошибка валидации: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("Ошибка при добавлении книги: " + e.getMessage());
+        }
     }
 
     private void removeBook() {
         int id = readIntInput("ID книги для удаления: ");
-        service.removeBook(id);
-        System.out.println("Книга удалена!");
+        try {
+            service.removeBook(id);
+            System.out.println("Книга удалена!");
+        } catch (IllegalStateException e) {
+            System.err.println("Ошибка удаления: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("Системная ошибка: " + e.getMessage());
+        }
     }
 
     private void searchBooksByAuthor() {
@@ -98,25 +112,42 @@ public class ConsoleInterface {
     }
 
     private void lendBook() {
-        int bookId = readIntInput("ID книги: ");
-        int readerId = readIntInput("ID читателя: ");
-        int days = readIntInput("На сколько дней: ");
-
         try {
-            service.lendBook(bookId, readerId, days);
-            System.out.println("Книга выдана!");
-        } catch (Exception e) {
-            System.out.println("Ошибка: " + e.getMessage());
-        }
+            System.out.println("\nВыдача книги:");
+
+            int bookId = readIntInput("ID книги: ");
+            int readerId = readIntInput("ID читателя: ");
+            int daysToReturn = readIntInput("На сколько дней выдать (3-365): ");
+
+            int loanId = service.lendBook(bookId, readerId, daysToReturn);
+            LocalDate returnDate = LocalDate.now().plusDays(daysToReturn);
+
+            System.out.printf(
+                    "Книга успешно выдана. ID выдачи: %d, вернуть до: %s%n",
+                    loanId,
+                    returnDate.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))
+            );
+
+        } catch (IllegalArgumentException e) {
+            System.err.println("Ошибка ввода: " + e.getMessage());
+        } catch (IllegalStateException e) {
+            System.err.println("Ошибка выдачи: " + e.getMessage());
+            } catch (Exception e) {
+                System.err.println("Системная ошибка: " + e.getMessage());
+            }
     }
+
 
     private void returnBook() {
         int bookId = readIntInput("ID возвращаемой книги: ");
+        int readerId = readIntInput("ID читателя: ");
         try {
-            service.returnBook(bookId);
+            service.returnBook(bookId, readerId);
             System.out.println("Книга возвращена!");
+        } catch (IllegalStateException e) {
+            System.err.println("Ошибка возврата: " + e.getMessage());
         } catch (Exception e) {
-            System.out.println("Ошибка: " + e.getMessage());
+            System.err.println("Системная ошибка: " + e.getMessage());
         }
     }
 
@@ -157,7 +188,7 @@ public class ConsoleInterface {
                     book.getAuthor(),
                     book.getYear(),
                     book.getAvailableCount(),
-                    book.getQuantity()
+                    book.getTotalQuantity()
             );
         }
     }
@@ -171,9 +202,14 @@ public class ConsoleInterface {
         while (true) {
             try {
                 System.out.print(prompt);
-                return Integer.parseInt(scanner.nextLine());
+                int value = Integer.parseInt(scanner.nextLine());
+                if (value <= 0) {
+                    System.err.println("Число должно быть положительным");
+                    continue;
+                }
+                return value;
             } catch (NumberFormatException e) {
-                System.out.println("Ошибка: введите число");
+                System.err.println("Ошибка: введите целое число");
             }
         }
     }

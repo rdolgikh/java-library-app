@@ -21,15 +21,39 @@ public class LibraryService {
         this.loanDao = loanDao;
     }
 
-    public void addBook(String title, String author, int year, int quantity) {
+    public int addBook(String title, String author, int year, int totalQuantity) {
+        validateBookFields(title, author, year, totalQuantity);
+
         Book book = new Book();
         book.setTitle(title);
         book.setAuthor(author);
         book.setYear(year);
-        book.setQuantity(quantity);
-        book.setBorrowedCount(0); // Новая книга, никто не брал
+        book.setTotalQuantity(totalQuantity);
+        book.setBorrowedCount(0);
 
-        bookDao.addBook(book);
+        return bookDao.addBook(book);
+    }
+
+    private void validateBookFields(String title, String author, int year, int totalQuantity) {
+        if (title == null || title.trim().isEmpty()) {
+            throw new IllegalArgumentException("Название книги не может быть пустым");
+        }
+        if (title.length() > 100) {
+            throw new IllegalArgumentException("Название книги слишком длинное (макс. 100 символов)");
+        }
+        if (author == null || author.trim().isEmpty()) {
+            throw new IllegalArgumentException("Автор не может быть пустым");
+        }
+        if (author.length() > 50) {
+            throw new IllegalArgumentException("Имя автора слишком длинное (макс. 50 символов)");
+        }
+        int currentYear = LocalDate.now().getYear();
+        if (year <= 0 || year > currentYear) {
+            throw new IllegalArgumentException("Год издания должен быть между 1 и " + currentYear);
+        }
+        if (totalQuantity <= 0) {
+            throw new IllegalArgumentException("Количество экземпляров должно быть положительным");
+        }
     }
 
     public void removeBook(int bookId) {
@@ -52,35 +76,61 @@ public class LibraryService {
         return bookDao.getAllBooks();
     }
 
-    public void lendBook(int bookId, int readerId, int daysToReturn) {
+    public int lendBook(int bookId, int readerId, int daysToReturn) {
         Book book = bookDao.getBookById(bookId);
+        if (book == null) {
+            throw new IllegalArgumentException("Книга с ID " + bookId + " не найдена");
+        }
+
+        if (!book.isAvailable()) {
+            throw new IllegalStateException("Книга '" + book.getTitle() + "' недоступна для выдачи");
+        }
+
         Reader reader = readerDao.getReaderById(readerId);
-
-        if (book == null || !book.isAvailable()) {
-            throw new IllegalStateException("Книга недоступна");
-        }
-
         if (reader == null) {
-            throw new IllegalStateException("Читатель не найден");
+            throw new IllegalArgumentException("Читатель с ID " + readerId + " не найден");
         }
+
+        validateLoanPeriod(daysToReturn);
+
+        LocalDate loanDate = LocalDate.now();
+        LocalDate returnDate = loanDate.plusDays(daysToReturn);
 
         Loan loan = new Loan();
         loan.setBook(book);
         loan.setReader(reader);
-        loan.setLoanDate(LocalDate.now());
-        loan.setReturnDate(LocalDate.now().plusDays(daysToReturn));
+        loan.setLoanDate(loanDate);
+        loan.setReturnDate(returnDate);
 
-        loanDao.createLoan(loan);
+        int loanId = loanDao.createLoan(loan);
         bookDao.updateBorrowedCount(bookId, book.getBorrowedCount() + 1);
+
+        return loanId;
     }
 
-    public void returnBook(int bookId) {
+    private void validateLoanPeriod(int days) {
+        if (days < 3) {
+            throw new IllegalArgumentException("Минимальный срок выдачи - 3 дня");
+        }
+
+        if (days > 365) {
+            throw new IllegalArgumentException("Максимальный срок выдачи - 1 год (365 дней)");
+        }
+    }
+
+
+    public void returnBook(int bookId, int readerId) {
         Book book = bookDao.getBookById(bookId);
         if (book == null) {
             throw new IllegalStateException("Книга не найдена");
         }
 
-        loanDao.returnBook(bookId);
+        Reader reader = readerDao.getReaderById(readerId);
+        if (reader == null) {
+            throw new IllegalStateException("Читатель не найден");
+        }
+
+        loanDao.returnBook(bookId, readerId);
         bookDao.updateBorrowedCount(bookId, book.getBorrowedCount() - 1);
     }
 
