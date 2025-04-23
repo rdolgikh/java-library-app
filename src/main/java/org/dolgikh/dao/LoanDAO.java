@@ -11,21 +11,30 @@ import java.util.List;
 
 public class LoanDAO {
 
-    public void createLoan(Loan loan) {
+    public int createLoan(Loan loan) {
         String sql = "INSERT INTO loans (book_id, reader_id, loan_date, return_date, returned) VALUES (?, ?, ?, ?, ?)";
 
         try (Connection conn = DatabaseConnector.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             stmt.setInt(1, loan.getBook().getId());
             stmt.setInt(2, loan.getReader().getId());
             stmt.setDate(3, Date.valueOf(loan.getLoanDate()));
             stmt.setDate(4, Date.valueOf(loan.getReturnDate()));
-            stmt.setBoolean(5, false); // Книга выдана (не возвращена)
+            stmt.setBoolean(5, false);
             stmt.executeUpdate();
+
+            try (ResultSet rs = stmt.getGeneratedKeys()) {
+                if (rs.next()) {
+                    int generatedId = rs.getInt(1);
+                    loan.setId(generatedId);
+                    return generatedId;
+                }
+            }
         } catch (SQLException e) {
             throw new RuntimeException("Ошибка при выдаче книги", e);
         }
+        throw new RuntimeException("Не удалось получить ID выдачи");
     }
 
     public void returnBook(int bookId) {

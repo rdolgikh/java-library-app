@@ -9,7 +9,7 @@ import java.util.List;
 
 public class BookDAO {
 
-    public void addBook(Book book) {
+    public int addBook(Book book) {
         String sql = "INSERT INTO books (title, author, year, quantity, borrowed_count) VALUES (?, ?, ?, ?, ?)";
 
         try (Connection conn = DatabaseConnector.getConnection();
@@ -24,12 +24,15 @@ public class BookDAO {
 
             try (ResultSet rs = stmt.getGeneratedKeys()) {
                 if (rs.next()) {
-                    book.setId(rs.getInt(1));
+                    int generatedId = rs.getInt(1);
+                    book.setId(generatedId);
+                    return generatedId;
                 }
             }
         } catch (SQLException e) {
             throw new RuntimeException("Ошибка при добавлении книги", e);
         }
+        throw new RuntimeException("Не удалось получить ID созданной книги");
     }
 
     public void deleteBook(int id) {
