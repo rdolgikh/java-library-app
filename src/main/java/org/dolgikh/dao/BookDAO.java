@@ -18,7 +18,7 @@ public class BookDAO {
             stmt.setString(1, book.getTitle());
             stmt.setString(2, book.getAuthor());
             stmt.setInt(3, book.getYear());
-            stmt.setInt(4, book.getQuantity());
+            stmt.setInt(4, book.getTotalQuantity());
             stmt.setInt(5, book.getBorrowedCount());
             stmt.executeUpdate();
 
@@ -177,7 +177,7 @@ public class BookDAO {
                 rs.getString("title"),
                 rs.getString("author"),
                 rs.getInt("year"),
-                rs.getInt("quantity"),
+                rs.getInt("total_quantity"),
                 rs.getInt("borrowed_count")
         );
     }

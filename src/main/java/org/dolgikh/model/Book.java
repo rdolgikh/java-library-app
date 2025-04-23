@@ -5,17 +5,17 @@ public class Book {
     private String title;
     private String author;
     private int year;
-    private int quantity;
+    private int totalQuantity;
     private int borrowedCount;
 
     public Book() {}
 
-    public Book(int id, String title, String author, int year, int quantity, int borrowedCount) {
+    public Book(int id, String title, String author, int year, int totalQuantity, int borrowedCount) {
         this.id = id;
         this.title = title;
         this.author = author;
         this.year = year;
-        this.quantity = quantity;
+        this.totalQuantity = totalQuantity;
         this.borrowedCount = borrowedCount;
     }
 
@@ -51,12 +51,12 @@ public class Book {
         this.year = year;
     }
 
-    public int getQuantity() {
-        return quantity;
+    public int getTotalQuantity() {
+        return totalQuantity;
     }
 
-    public void setQuantity(int quantity) {
-        this.quantity = quantity;
+    public void setTotalQuantity(int totalQuantity) {
+        this.totalQuantity = totalQuantity;
     }
 
     public int getBorrowedCount() {
@@ -68,7 +68,7 @@ public class Book {
     }
 
     public int getAvailableCount() {
-        return quantity - borrowedCount;
+        return totalQuantity - borrowedCount;
     }
 
     public boolean isAvailable() {
